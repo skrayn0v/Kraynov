@@ -1,0 +1,1829 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
+  <title>Demo Mobile App — Figma-ish</title>
+  <style>
+    :root{
+      --bg:#f3f4f6;
+      --card:#ffffff;
+      --text:#111318;
+      --muted:#6b7280;
+      --line:#e5e7eb;
+
+      --shadow: 0 18px 60px rgba(0,0,0,.10);
+      --shadow2: 0 22px 90px rgba(0,0,0,.14);
+      --radius: 22px;
+      --radius2: 18px;
+
+      --red:#ef2333;
+      --red2:#ff3b47;
+      --black:#0b0c10;
+
+      --safe-top: env(safe-area-inset-top, 0px);
+      --safe-bottom: env(safe-area-inset-bottom, 0px);
+      --w: min(430px, 100vw);
+    }
+
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0;
+      background:#111;
+      display:flex;
+      justify-content:center;
+      font: 14px/1.35 system-ui,-apple-system,Segoe UI,Roboto,Arial;
+      color:var(--text);
+      overscroll-behavior: none;
+    }
+
+    .phone{
+      width:var(--w);
+      min-height:100dvh;
+      background: var(--bg);
+      position:relative;
+      overflow:hidden;
+      padding-bottom: calc(86px + var(--safe-bottom));
+    }
+
+    /* Top header */
+    .header{
+      padding: calc(12px + var(--safe-top)) 14px 12px;
+      background: var(--bg);
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+    .brandBadge{
+      margin: 0 auto 10px;
+      width: 92px;
+      height: 22px;
+      border-radius: 999px;
+      background: var(--red);
+      color:#fff;
+      display:grid;
+      place-items:center;
+      font-weight:900;
+      font-size: 11px;
+      letter-spacing:.35px;
+      transform: rotate(-4deg);
+      box-shadow: 0 10px 25px rgba(239,35,51,.25);
+      user-select:none;
+    }
+    .brandRow{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+    }
+    .bar{ display:flex; align-items:center; gap:10px; }
+    .title{
+      flex: 1;
+      text-align:left;
+      font-weight: 950;
+      font-size: 20px;
+      letter-spacing:.2px;
+      margin:0 6px;
+    }
+    .iconbtn{
+      appearance:none;
+      border:0;
+      width:40px;height:40px;
+      border-radius: 14px;
+      background: #fff;
+      box-shadow: 0 10px 30px rgba(0,0,0,.08);
+      display:grid;
+      place-items:center;
+      cursor:pointer;
+      transition: transform .12s ease, filter .2s ease;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .iconbtn:active{ transform: scale(.97); }
+    .svg{ width:20px; height:20px; display:block; }
+
+    .chips{
+      display:flex;
+      gap:8px;
+      overflow:auto;
+      padding: 10px 2px 0;
+      scrollbar-width:none;
+    }
+    .chips::-webkit-scrollbar{display:none}
+    .chip{
+      border:1px solid var(--line);
+      background:#fff;
+      color: #111;
+      padding: 8px 12px;
+      border-radius: 999px;
+      cursor:pointer;
+      white-space:nowrap;
+      transition: transform .12s ease, background .2s ease, border-color .2s ease, color .2s ease;
+      -webkit-tap-highlight-color: transparent;
+      display:flex;
+      align-items:center;
+      gap:8px;
+      user-select:none;
+      font-weight:800;
+      font-size: 12px;
+    }
+    .chip:active{ transform: scale(.98); }
+    .chip.active{
+      background: #0f172a;
+      border-color: #0f172a;
+      color:#fff;
+    }
+
+    /* Pages router */
+    .pages{
+      position:relative;
+      min-height: calc(100dvh - 86px);
+      touch-action: pan-y; /* allow vertical scroll; we handle horizontal swipe */
+    }
+    .page{
+      position:absolute;
+      inset:0;
+      overflow:auto;
+      padding: 12px 14px 14px;
+      transform: translateX(8%);
+      opacity:0;
+      pointer-events:none;
+      transition: transform .22s ease, opacity .22s ease;
+      -webkit-overflow-scrolling: touch;
+    }
+    .page.active{
+      transform: translateX(0);
+      opacity:1;
+      pointer-events:auto;
+    }
+    .card{
+      background: var(--card);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      border:1px solid rgba(0,0,0,.04);
+      overflow:hidden;
+    }
+    .stack{ display:flex; flex-direction:column; gap:14px; }
+
+    /* Events cards */
+    .event{
+      display:grid;
+      grid-template-columns: 28px 1fr;
+      gap:12px;
+      align-items:stretch;
+      padding: 0;
+    }
+    .checkCol{
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding: 12px 0;
+    }
+    .check{
+      width: 18px;height: 18px;
+      border-radius: 4px;
+      border:2px solid #111;
+      background:#fff;
+      display:grid;place-items:center;
+      cursor:pointer;
+      transition: transform .12s ease, background .2s ease, border-color .2s ease;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .check:active{ transform: scale(.96); }
+    .check.on{
+      border-color: var(--red);
+      background: var(--red);
+    }
+    .check svg{ width:14px;height:14px; opacity:0; transform: scale(.6); transition: opacity .15s ease, transform .15s ease; }
+    .check.on svg{ opacity:1; transform: scale(1); }
+
+    .eventBody{
+      overflow:hidden;
+      border-radius: var(--radius);
+      cursor:pointer;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .poster{
+      height: 148px;
+      position:relative;
+      overflow:hidden;
+      border-top-left-radius: var(--radius);
+      border-top-right-radius: var(--radius);
+      background:#ddd;
+    }
+    .poster img{
+      width:100%;
+      height:100%;
+      object-fit:cover;
+      display:block;
+      transform: scale(1.02);
+      transition: transform .35s ease, filter .35s ease;
+      filter: saturate(1.05) contrast(1.05);
+    }
+    .eventBody:hover .poster img{ transform: scale(1.06); }
+    .poster::after{
+      content:"";
+      position:absolute; inset:-40%;
+      background: linear-gradient(110deg, transparent 25%, rgba(255,255,255,.22) 45%, transparent 60%);
+      transform: translateX(-55%) rotate(8deg);
+      animation: shimmer 2.8s ease-in-out infinite;
+      opacity:.55;
+      pointer-events:none;
+    }
+    @keyframes shimmer{
+      0%{ transform: translateX(-65%) rotate(8deg); }
+      60%{ transform: translateX(45%) rotate(8deg); }
+      100%{ transform: translateX(80%) rotate(8deg); }
+    }
+
+    .info{
+      background: #e7f3ff;
+      padding: 12px;
+      display:grid;
+      grid-template-columns: 1fr auto;
+      gap:10px;
+      align-items:start;
+    }
+    .name{ font-weight: 950; margin:0; font-size: 15px; }
+    .sub{
+      margin:6px 0 0;
+      color: var(--muted);
+      font-size: 12px;
+      display:flex;
+      flex-direction:column;
+      gap:2px;
+      font-weight:650;
+    }
+    .pricePill{
+      justify-self:end;
+      background:#111;
+      color:#fff;
+      border-radius: 999px;
+      padding: 6px 10px;
+      font-weight: 950;
+      font-size: 12px;
+      white-space:nowrap;
+    }
+    .listAppear{
+      transform: translateY(10px);
+      opacity:0;
+      animation: inUp .35s cubic-bezier(.2,.8,.2,1) forwards;
+    }
+    @keyframes inUp{ to{ transform: translateY(0); opacity:1; } }
+
+    /* Summary bar */
+    .summaryBar{
+      position: fixed;
+      left: 50%;
+      transform: translateX(-50%);
+      bottom: calc(68px + var(--safe-bottom));
+      width: var(--w);
+      padding: 0 14px;
+      pointer-events:none;
+      z-index: 20;
+    }
+    .summaryInner{
+      pointer-events:auto;
+      border-radius: 18px;
+      background:#fff;
+      border:1px solid rgba(0,0,0,.05);
+      box-shadow: var(--shadow2);
+      padding: 12px 12px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+    }
+    .summaryInner strong{ font-weight: 950; }
+    .summaryInner .muted{ color:var(--muted); font-size:12px; font-weight:650; }
+    .summaryInner .buy{
+      border:0;
+      background: var(--red);
+      color:#fff;
+      padding: 10px 14px;
+      border-radius: 14px;
+      font-weight: 950;
+      cursor:pointer;
+      transition: transform .12s ease, filter .2s ease;
+      -webkit-tap-highlight-color: transparent;
+      box-shadow: 0 16px 40px rgba(239,35,51,.18);
+    }
+    .summaryInner .buy:active{ transform: scale(.98); }
+
+    /* Detail screen */
+    .detailTitle{
+      margin: 6px 0 10px;
+      font-weight: 950;
+      font-size: 22px;
+      text-align:center;
+    }
+    .detailPoster{
+      border-radius: 22px;
+      overflow:hidden;
+      box-shadow: var(--shadow);
+      background:#ddd;
+    }
+    .detailPoster img{ width:100%; height: 240px; object-fit:cover; display:block; }
+
+    .slotBlock{
+      background:#fff;
+      border-radius: 18px;
+      padding: 12px;
+      box-shadow: 0 16px 55px rgba(0,0,0,.10);
+      border:1px solid rgba(0,0,0,.05);
+      margin-top:12px;
+    }
+    .rowHead{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      margin-bottom: 10px;
+    }
+    .rowHead .date{ font-weight: 950; }
+    .rowHead .from{ background:#111; color:#fff; padding: 6px 10px; border-radius: 999px; font-weight:950; font-size:12px; }
+    .slots{ display:flex; gap:10px; flex-wrap:wrap; }
+    .slot{
+      border:0;
+      background:#e5e7eb;
+      color:#111;
+      padding: 10px 14px;
+      border-radius: 999px;
+      font-weight: 950;
+      cursor:pointer;
+      transition: transform .12s ease, background .2s ease;
+      -webkit-tap-highlight-color: transparent;
+      min-width: 72px;
+      text-align:center;
+    }
+    .slot:active{ transform: scale(.98); }
+    .slot.active{ background:#111; color:#fff; }
+
+    .buyBig{
+      margin-top: 12px;
+      width:100%;
+      border:0;
+      background: var(--black);
+      color:#fff;
+      padding: 14px 16px;
+      border-radius: 18px;
+      font-weight: 950;
+      cursor:pointer;
+      transition: transform .12s ease, filter .2s ease;
+      -webkit-tap-highlight-color: transparent;
+      box-shadow: 0 22px 70px rgba(0,0,0,.18);
+    }
+    .buyBig.red{ background: var(--red); box-shadow: 0 22px 70px rgba(239,35,51,.20); }
+    .buyBig:active{ transform: scale(.99); }
+
+    /* Chat */
+    .chatWrap{
+      background:#fff;
+      border-radius: 22px;
+      box-shadow: var(--shadow);
+      overflow:hidden;
+      border:1px solid rgba(0,0,0,.05);
+    }
+    .chatTop{
+      padding: 12px;
+      background:#f7f7fb;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      border-bottom:1px solid var(--line);
+    }
+    .chatTop strong{ font-weight:950; }
+    .msgs{
+      padding: 12px;
+      display:flex;
+      flex-direction:column;
+      gap:10px;
+      min-height: 320px;
+      background:
+        radial-gradient(320px 180px at 30% 0%, rgba(239,35,51,.10), transparent 55%),
+        #fff;
+    }
+    .bubble{
+      max-width: 78%;
+      padding: 10px 12px;
+      border-radius: 16px;
+      box-shadow: 0 10px 22px rgba(0,0,0,.07);
+      border:1px solid rgba(0,0,0,.04);
+      font-weight:750;
+      animation: inUp .22s ease both;
+    }
+    .bubble.left{ background:#f2f3f7; align-self:flex-start; }
+    .bubble.right{ background:#111; color:#fff; align-self:flex-end; }
+    .chatInput{
+      display:flex;
+      gap:10px;
+      padding: 12px;
+      border-top:1px solid var(--line);
+      background:#fff;
+    }
+    .chatInput input{
+      flex:1;
+      border:1px solid var(--line);
+      border-radius: 16px;
+      padding: 12px 12px;
+      outline:none;
+      font-weight:750;
+      background:#fff;
+    }
+    .send{
+      border:0;
+      background: var(--red);
+      color:#fff;
+      padding: 12px 14px;
+      border-radius: 16px;
+      font-weight: 950;
+      cursor:pointer;
+      -webkit-tap-highlight-color: transparent;
+      box-shadow: 0 16px 40px rgba(239,35,51,.18);
+    }
+    .send:active{ transform: scale(.99); }
+
+    /* Leaderboard */
+    .lbRow{
+      display:grid;
+      grid-template-columns: 40px 56px 1fr auto;
+      gap:12px;
+      align-items:center;
+    }
+    .rankBadge{
+      font-weight:950;
+      background:#f2f3f7;
+      border:1px solid rgba(0,0,0,.05);
+      border-radius:14px;
+      width:40px;height:40px;
+      display:grid;place-items:center
+    }
+    .ava{
+      width:56px;height:56px;
+      border-radius:18px;
+      overflow:hidden;
+      background:#e5e7eb;
+      border:1px solid rgba(0,0,0,.06);
+      cursor:pointer;
+    }
+    .ava img{ width:100%; height:100%; object-fit:cover; display:block; }
+    .lbName{ font-weight:950; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .lbSub{ color:var(--muted); font-weight:650; margin-top:4px; font-size:12px; }
+
+    /* Loyalty */
+    .loyalCard{
+      background:#fff;
+      border-radius: 22px;
+      box-shadow: var(--shadow);
+      border:1px solid rgba(0,0,0,.05);
+      padding: 14px;
+    }
+    .profileRow{ display:flex; gap:12px; align-items:center; }
+    .avaBig{ width:64px;height:64px; border-radius:18px; overflow:hidden; background:#e5e7eb; border:1px solid rgba(0,0,0,.06); }
+    .avaBig img{ width:100%; height:100%; object-fit:cover; display:block; }
+    .who h3{ margin:0; font-weight:950; }
+    .who p{ margin:4px 0 0; color:var(--muted); font-weight:650; }
+
+    .loyTitle{
+      margin: 14px 0 10px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      font-weight: 950;
+      font-size: 18px;
+    }
+    .track{
+      height: 10px;
+      border-radius: 999px;
+      background:#e5e7eb;
+      position:relative;
+      overflow:hidden;
+    }
+    .fill{
+      height:100%;
+      width: 58%;
+      background: linear-gradient(90deg, var(--red), var(--red2));
+      border-radius: 999px;
+      box-shadow: 0 10px 22px rgba(239,35,51,.18);
+    }
+    .knob{
+      position:absolute;
+      top:50%;
+      left:58%;
+      transform: translate(-50%,-50%);
+      width: 22px;height:22px;
+      border-radius: 999px;
+      background: var(--red);
+      box-shadow: 0 12px 26px rgba(239,35,51,.25);
+      border: 3px solid #fff;
+      animation: pulse 1.8s ease-in-out infinite;
+    }
+    @keyframes pulse{
+      0%,100%{ box-shadow: 0 12px 26px rgba(239,35,51,.25); }
+      50%{ box-shadow: 0 12px 26px rgba(239,35,51,.45); }
+    }
+    .lvlGrid{ display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-top: 12px; }
+    .lvl{
+      border:1px solid rgba(0,0,0,.06);
+      border-radius: 18px;
+      padding: 12px;
+      background:#fff;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      cursor:pointer;
+      -webkit-tap-highlight-color: transparent;
+      transition: transform .12s ease;
+      font-weight:950;
+    }
+    .lvl:active{ transform: scale(.99); }
+    .miniIcon{
+      width:34px;height:34px;
+      border-radius: 12px;
+      background: #f2f3f7;
+      display:grid;place-items:center;
+      border:1px solid rgba(0,0,0,.05);
+    }
+    .lvlLeft{ display:flex; align-items:center; gap:10px; }
+    .note{
+      margin-top: 10px;
+      background:#f2f3f7;
+      border-radius: 18px;
+      padding: 12px;
+      display:flex;
+      gap:10px;
+      align-items:center;
+      border:1px solid rgba(0,0,0,.04);
+      font-weight:750;
+    }
+
+    /* Bottom nav */
+    .nav{
+      position:fixed;
+      left:50%;
+      transform: translateX(-50%);
+      bottom: calc(10px + var(--safe-bottom));
+      width: var(--w);
+      padding: 0 14px;
+      z-index: 30;
+    }
+    .navInner{
+      background: rgba(255,255,255,.92);
+      backdrop-filter: blur(10px);
+      border:1px solid rgba(0,0,0,.06);
+      box-shadow: var(--shadow2);
+      border-radius: 22px;
+      display:grid;
+      grid-template-columns: repeat(4, 1fr);
+      overflow:hidden;
+    }
+    .navBtn{
+      padding: 10px 8px;
+      display:grid;
+      place-items:center;
+      gap:6px;
+      color: #111;
+      cursor:pointer;
+      user-select:none;
+      -webkit-tap-highlight-color: transparent;
+      font-weight: 850;
+      font-size: 11px;
+      transition: background .2s ease;
+    }
+    .navBtn.active{
+      background: rgba(239,35,51,.12);
+    }
+
+    /* Overlays */
+    .overlay{
+      position:fixed; inset:0;
+      background: rgba(0,0,0,.35);
+      display:none;
+      align-items:end;
+      justify-content:center;
+      z-index: 50;
+      padding: 14px 14px calc(14px + var(--safe-bottom));
+    }
+    .overlay.show{ display:flex; }
+    .sheet{
+      width: var(--w);
+      background:#fff;
+      border-radius: 26px;
+      box-shadow: 0 30px 120px rgba(0,0,0,.25);
+      border:1px solid rgba(0,0,0,.05);
+      overflow:hidden;
+      transform: translateY(14px);
+      opacity:0;
+      animation: sheetIn .22s ease forwards;
+    }
+    @keyframes sheetIn{ to{ transform:translateY(0); opacity:1; } }
+    .sheetTop{
+      padding: 12px 14px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      border-bottom:1px solid var(--line);
+    }
+    .sheetTop strong{ font-weight:950; }
+    .sheetBody{ padding: 14px; }
+    .fieldTitle{ font-weight:950; font-size:18px; margin: 8px 0 10px; }
+    .row{ display:flex; gap:10px; flex-wrap:wrap; }
+    .opt{
+      border:1px solid var(--line);
+      background:#fff;
+      padding: 10px 12px;
+      border-radius: 999px;
+      cursor:pointer;
+      font-weight:900;
+      transition: background .2s ease, transform .12s ease, border-color .2s ease, color .2s ease;
+      -webkit-tap-highlight-color: transparent;
+      font-size:12px;
+    }
+    .opt:active{ transform: scale(.98); }
+    .opt.active{ background:#111; border-color:#111; color:#fff; }
+
+    .sheetBtns{
+      display:flex;
+      gap:10px;
+      margin-top: 12px;
+    }
+    .btn{
+      flex:1;
+      border:0;
+      padding: 14px 16px;
+      border-radius: 18px;
+      font-weight: 950;
+      cursor:pointer;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .btn.red{
+      background: var(--red);
+      color:#fff;
+      box-shadow: 0 20px 55px rgba(239,35,51,.22);
+    }
+    .btn.ghost{
+      background:#f2f3f7;
+      border:1px solid rgba(0,0,0,.06);
+      color:#111;
+    }
+    .btn:active{ transform: scale(.99); }
+
+    /* Calendar */
+    .cal{
+      background:#fff;
+      border:1px solid rgba(0,0,0,.06);
+      border-radius: 18px;
+      padding: 12px;
+      box-shadow: 0 16px 55px rgba(0,0,0,.08);
+    }
+    .calTop{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      margin-bottom: 10px;
+    }
+    .calTop .navAr{
+      width:40px;height:40px;
+      border-radius: 14px;
+      border:1px solid rgba(0,0,0,.06);
+      background:#fff;
+      box-shadow: 0 10px 30px rgba(0,0,0,.06);
+      cursor:pointer;
+      font-weight:950;
+    }
+    .calTop .navAr:active{ transform: scale(.98); }
+    .calTop .selects{
+      display:flex; gap:10px; align-items:center;
+      font-weight:950;
+    }
+    select{
+      border:1px solid rgba(0,0,0,.10);
+      border-radius: 14px;
+      padding: 9px 10px;
+      background:#fff;
+      font-weight:950;
+      outline:none;
+    }
+    .dow{
+      display:grid;
+      grid-template-columns: repeat(7,1fr);
+      gap:6px;
+      margin: 10px 0 6px;
+      color: var(--muted);
+      font-weight:900;
+      font-size:11px;
+      text-align:center;
+    }
+    .grid{
+      display:grid;
+      grid-template-columns: repeat(7,1fr);
+      gap:6px;
+    }
+    .day{
+      height: 40px;
+      border-radius: 12px;
+      display:grid;
+      place-items:center;
+      cursor:pointer;
+      user-select:none;
+      -webkit-tap-highlight-color: transparent;
+      border:1px solid transparent;
+      font-weight:900;
+    }
+    .day.muted{ color:#c0c4ce; cursor:default; }
+    .day:hover{ border-color: rgba(0,0,0,.06); }
+    .day:active{ transform: scale(.98); }
+    .day.sel{
+      background:#111;
+      color:#fff;
+    }
+    .day.inRange{
+      background: rgba(17,19,24,.08);
+      border-color: rgba(17,19,24,.05);
+    }
+
+    .rangeLine{
+      margin-top:10px;
+      font-weight:850;
+      color: var(--muted);
+      font-size:12px;
+      display:flex;
+      justify-content:space-between;
+      gap:10px;
+    }
+
+    /* Image viewer */
+    .viewer{
+      position:fixed; inset:0;
+      background: rgba(0,0,0,.70);
+      display:none;
+      align-items:center;
+      justify-content:center;
+      z-index: 60;
+      padding: 16px;
+    }
+    .viewer.show{ display:flex; }
+    .viewer .img{
+      width: min(var(--w), 92vw);
+      max-height: 78vh;
+      border-radius: 22px;
+      overflow:hidden;
+      background:#111;
+      box-shadow: 0 30px 120px rgba(0,0,0,.45);
+      transform: scale(.92);
+      opacity:0;
+      animation: zoomIn .18s ease forwards;
+    }
+    @keyframes zoomIn{ to{ transform: scale(1); opacity:1; } }
+    .viewer img{ width:100%; height:100%; object-fit:cover; display:block; }
+
+    /* Toast */
+    .toast{
+      position:fixed;
+      left:50%;
+      transform: translateX(-50%);
+      bottom: calc(140px + var(--safe-bottom));
+      background: rgba(17,19,24,.92);
+      color:#fff;
+      padding: 10px 12px;
+      border-radius: 16px;
+      box-shadow: 0 20px 70px rgba(0,0,0,.35);
+      display:none;
+      z-index: 80;
+      font-weight:850;
+      max-width: min(92vw, 420px);
+      text-align:center;
+    }
+    .toast.show{ display:block; animation: toastIn .18s ease; }
+    @keyframes toastIn{ from{ opacity:0; transform: translateX(-50%) translateY(10px);} to{opacity:1; transform: translateX(-50%) translateY(0);} }
+
+    @media (prefers-reduced-motion: reduce){
+      *{ animation:none!important; transition:none!important; }
+    }
+  </style>
+</head>
+<body>
+  <div class="phone" id="app">
+    <div class="header">
+      <div class="brandBadge">МГУ • АЛЬФА</div>
+      <div class="brandRow">
+        <div class="bar">
+          <button class="iconbtn" id="btnBack" title="Назад">
+            <svg class="svg" viewBox="0 0 24 24" fill="none">
+              <path d="M15 18l-6-6 6-6" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </button>
+          <h1 class="title" id="pageTitle">Мои события</h1>
+        </div>
+        <div class="bar">
+          <button class="iconbtn" id="btnSearch" title="Поиск">
+            <svg class="svg" viewBox="0 0 24 24" fill="none">
+              <path d="M10.5 18a7.5 7.5 0 110-15 7.5 7.5 0 010 15z" stroke="currentColor" stroke-width="2"/>
+              <path d="M16.5 16.5L21 21" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            </svg>
+          </button>
+          <button class="iconbtn" id="btnPin" title="Гео">
+            <svg class="svg" viewBox="0 0 24 24" fill="none">
+              <path d="M12 22s7-4.4 7-11a7 7 0 10-14 0c0 6.6 7 11 7 11z" stroke="currentColor" stroke-width="2"/>
+              <circle cx="12" cy="11" r="2.5" stroke="currentColor" stroke-width="2"/>
+            </svg>
+          </button>
+          <button class="iconbtn" id="btnProfile" title="Профиль">
+            <svg class="svg" viewBox="0 0 24 24" fill="none">
+              <path d="M20 21a8 8 0 10-16 0" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+              <path d="M12 12a4.2 4.2 0 100-8.4 4.2 4.2 0 000 8.4z" stroke="currentColor" stroke-width="2"/>
+            </svg>
+          </button>
+        </div>
+      </div>
+
+      <div class="chips" id="typeChips">
+        <div class="chip active" data-type="all">✓ Все</div>
+        <div class="chip" data-type="movie">Кино</div>
+        <div class="chip" data-type="theatre">Театр</div>
+        <div class="chip" data-type="concerts">Концерты</div>
+        <div class="chip" data-type="sport">Спорт</div>
+        <div class="chip" id="openFilters">Фильтры</div>
+      </div>
+    </div>
+
+    <div class="pages" id="pages">
+      <section class="page active" id="page-events">
+        <div class="stack" id="eventsList"></div>
+        <div style="height: 90px;"></div>
+      </section>
+
+      <section class="page" id="page-detail">
+        <div class="detailPoster card" id="detailPoster"></div>
+        <div class="detailTitle" id="detailName">—</div>
+
+        <div id="slotBlocks"></div>
+
+        <button class="buyBig red" id="btnBuyBig">Купить билет</button>
+        <button class="buyBig" id="btnJoinChat">Присоединиться к чату события</button>
+
+        <div style="height: 90px;"></div>
+      </section>
+
+      <section class="page" id="page-chat">
+        <div class="chatWrap">
+          <div class="chatTop">
+            <strong id="chatTitle">Чат события</strong>
+            <button class="iconbtn" id="btnChatPic" title="Открыть картинку" style="width:40px;height:40px">
+              <svg class="svg" viewBox="0 0 24 24" fill="none">
+                <path d="M4 7a3 3 0 013-3h10a3 3 0 013 3v10a3 3 0 01-3 3H7a3 3 0 01-3-3V7z" stroke="currentColor" stroke-width="2"/>
+                <path d="M7 14l2-2 3 3 3-4 2 3" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                <circle cx="9" cy="9" r="1.2" fill="currentColor"/>
+              </svg>
+            </button>
+          </div>
+          <div class="msgs" id="msgs"></div>
+          <div class="chatInput">
+            <input id="chatInput" placeholder="Сообщение…"/>
+            <button class="send" id="btnSend">Отпр</button>
+          </div>
+        </div>
+        <div style="height: 90px;"></div>
+      </section>
+
+      <section class="page" id="page-leaderboard">
+        <div class="card" style="padding:14px">
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:10px">
+            <strong style="font-weight:950;font-size:18px">Лидерборд</strong>
+            <button class="iconbtn" id="btnLBShuffle" title="Обновить" style="width:40px;height:40px">
+              <svg class="svg" viewBox="0 0 24 24" fill="none">
+                <path d="M4 7h5l10 10h1" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                <path d="M19 7h1l-3-3" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                <path d="M17 4l3 3-3 3" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                <path d="M4 17h5l3-3" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+              </svg>
+            </button>
+          </div>
+          <p style="margin:6px 0 12px;color:var(--muted);font-weight:650">Тап по аватару — зум (demo)</p>
+          <div id="lbList" class="stack"></div>
+        </div>
+        <div style="height: 90px;"></div>
+      </section>
+
+      <section class="page" id="page-loyalty">
+        <div class="loyalCard">
+          <div class="profileRow">
+            <div class="avaBig" id="loyAva"></div>
+            <div class="who">
+              <h3>Сергей Багратионов</h3>
+              <p>Уровень лояльности</p>
+            </div>
+          </div>
+
+          <div class="loyTitle">
+            <span>Уровень лояльности</span>
+            <span style="font-size:14px;color:var(--muted)">→</span>
+          </div>
+
+          <div class="track">
+            <div class="fill"></div>
+            <div class="knob"></div>
+          </div>
+
+          <div class="lvlGrid">
+            <div class="lvl" data-benefits="lvl1">
+              <div class="lvlLeft">
+                <div class="miniIcon">⭐</div>
+                <div>1 уровень</div>
+              </div>
+              <div style="opacity:.7">›</div>
+            </div>
+            <div class="lvl" data-benefits="lvl2">
+              <div class="lvlLeft">
+                <div class="miniIcon">⭐</div>
+                <div>2 уровень</div>
+              </div>
+              <div style="opacity:.7">›</div>
+            </div>
+          </div>
+
+          <div class="note">
+            <span style="font-size:18px">👤</span>
+            <div>До следующего уровня ещё <strong>40 000 ₽</strong></div>
+          </div>
+        </div>
+
+        <div class="card" style="margin-top:12px;padding:14px">
+          <div class="stack" style="gap:10px">
+            <div class="lvl" id="btnSupport"><div class="lvlLeft"><div class="miniIcon">👤</div><div>Поддержка</div></div><div style="opacity:.7">›</div></div>
+            <div class="lvl" id="btnFAQ"><div class="lvlLeft"><div class="miniIcon">🔎</div><div>Частые вопросы</div></div><div style="opacity:.7">›</div></div>
+            <div class="lvl" id="btnRules"><div class="lvlLeft"><div class="miniIcon">📄</div><div>Правила сервиса</div></div><div style="opacity:.7">›</div></div>
+            <div class="lvl" id="btnHistory"><div class="lvlLeft"><div class="miniIcon">🕘</div><div>История чатов</div></div><div style="opacity:.7">›</div></div>
+          </div>
+        </div>
+
+        <div style="height: 90px;"></div>
+      </section>
+
+      <section class="page" id="page-profile">
+        <div class="card" style="padding:14px">
+          <strong style="font-weight:950;font-size:18px">Профиль (демо)</strong>
+          <p style="margin:8px 0;color:var(--muted);font-weight:650">
+            Свайпай экран влево/вправо — переключаются вкладки снизу.
+          </p>
+          <button class="buyBig red" id="btnOpenLoyalty">Открыть “Лояльность”</button>
+        </div>
+        <div style="height: 90px;"></div>
+      </section>
+    </div>
+
+    <div class="summaryBar" id="summaryBar">
+      <div class="summaryInner">
+        <div>
+          <div><strong id="sumSelected">Выбрано 0 событий</strong>: <strong id="sumPrice">0 ₽</strong></div>
+          <div class="muted">Получено бонусов: <strong id="sumBonus">0</strong></div>
+        </div>
+        <button class="buy" id="btnBuySmall">Выбрать</button>
+      </div>
+    </div>
+
+    <div class="nav">
+      <div class="navInner" id="nav">
+        <div class="navBtn active" data-go="events">
+          <svg class="svg" viewBox="0 0 24 24" fill="none">
+            <path d="M7 3v3M17 3v3" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            <path d="M4 8h16" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            <path d="M6 6h12a2 2 0 012 2v12a2 2 0 01-2 2H6a2 2 0 01-2-2V8a2 2 0 012-2z" stroke="currentColor" stroke-width="2"/>
+          </svg>
+          <div>События</div>
+        </div>
+        <div class="navBtn" data-go="leaderboard">
+          <svg class="svg" viewBox="0 0 24 24" fill="none">
+            <path d="M5 20V10" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            <path d="M12 20V4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            <path d="M19 20v-7" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+          <div>Топ</div>
+        </div>
+        <div class="navBtn" data-go="loyalty">
+          <svg class="svg" viewBox="0 0 24 24" fill="none">
+            <path d="M12 17l-5.6 3 1.2-6.4L3 9.3l6.6-.8L12 3l2.4 5.5 6.6.8-4.8 4.3 1.2 6.4z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+          </svg>
+          <div>Лояльность</div>
+        </div>
+        <div class="navBtn" data-go="profile">
+          <svg class="svg" viewBox="0 0 24 24" fill="none">
+            <path d="M20 21a8 8 0 10-16 0" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            <path d="M12 12a4.2 4.2 0 100-8.4 4.2 4.2 0 000 8.4z" stroke="currentColor" stroke-width="2"/>
+          </svg>
+          <div>Профиль</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Filters sheet -->
+    <div class="overlay" id="filtersOverlay">
+      <div class="sheet">
+        <div class="sheetTop">
+          <button class="iconbtn" id="btnFiltersBack" style="width:40px;height:40px" title="Назад">
+            <svg class="svg" viewBox="0 0 24 24" fill="none">
+              <path d="M15 18l-6-6 6-6" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </button>
+          <strong>Фильтры</strong>
+          <div style="width:40px"></div>
+        </div>
+        <div class="sheetBody">
+          <div class="fieldTitle">Тип события</div>
+          <div class="row" id="fType">
+            <div class="opt active" data-v="all">✓ Все</div>
+            <div class="opt" data-v="movie">Кино</div>
+            <div class="opt" data-v="theatre">Театр</div>
+            <div class="opt" data-v="concerts">Концерты</div>
+            <div class="opt" data-v="sport">Спорт</div>
+          </div>
+
+          <div class="fieldTitle" style="margin-top:14px">Город</div>
+          <div class="row" id="fCity">
+            <div class="opt active" data-v="moscow">✓ Москва</div>
+            <div class="opt" data-v="spb">Санкт-Петербург</div>
+            <div class="opt" data-v="kazan">Казань</div>
+          </div>
+
+          <div class="fieldTitle" style="margin-top:14px">Дата (диапазон)</div>
+          <div class="cal" id="cal"></div>
+
+          <div class="sheetBtns">
+            <button class="btn ghost" id="btnCalReset">Сброс</button>
+            <button class="btn red" id="btnFiltersOk">Готово</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Benefits sheet -->
+    <div class="overlay" id="benefitsOverlay">
+      <div class="sheet">
+        <div class="sheetTop">
+          <strong id="benTitle">Преимущества</strong>
+          <button class="iconbtn" id="btnBenClose" style="width:40px;height:40px" title="Закрыть">
+            ✕
+          </button>
+        </div>
+        <div class="sheetBody" id="benBody" style="display:flex;flex-direction:column;gap:12px"></div>
+      </div>
+    </div>
+
+    <!-- Viewer -->
+    <div class="viewer" id="viewer">
+      <div class="img" id="viewerBox"></div>
+    </div>
+
+    <div class="toast" id="toast">Готово</div>
+  </div>
+
+  <script>
+    /* ====== Data images (SVG data-uri) ====== */
+    const svgToDataUri = (svg) => "data:image/svg+xml;charset=UTF-8," + encodeURIComponent(svg);
+
+    function posterSvg(seed, title){
+      const a = (seed*41)%360, b=(seed*83+90)%360, c=(seed*17+220)%360;
+      const t = (title||"").toUpperCase().slice(0,18);
+      return svgToDataUri(`
+        <svg xmlns="http://www.w3.org/2000/svg" width="1200" height="700" viewBox="0 0 1200 700">
+          <defs>
+            <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0" stop-color="hsl(${a} 90% 55%)"/>
+              <stop offset="0.55" stop-color="hsl(${b} 90% 50%)"/>
+              <stop offset="1" stop-color="hsl(${c} 80% 45%)"/>
+            </linearGradient>
+            <filter id="n" x="-20%" y="-20%" width="140%" height="140%">
+              <feTurbulence baseFrequency="0.9" numOctaves="2" seed="${seed}" type="fractalNoise" />
+              <feColorMatrix type="matrix" values="
+                1 0 0 0 0
+                0 1 0 0 0
+                0 0 1 0 0
+                0 0 0 .18 0"/>
+            </filter>
+          </defs>
+
+          <rect width="1200" height="700" rx="48" fill="url(#g)"/>
+          <rect width="1200" height="700" rx="48" filter="url(#n)" opacity=".7"/>
+          <circle cx="980" cy="140" r="160" fill="rgba(255,255,255,.18)"/>
+          <circle cx="260" cy="620" r="240" fill="rgba(0,0,0,.14)"/>
+          <rect x="70" y="430" width="1060" height="190" rx="34" fill="rgba(0,0,0,.22)"/>
+          <text x="110" y="520" font-family="system-ui,-apple-system,Segoe UI,Roboto" font-size="64" font-weight="900" fill="rgba(255,255,255,.92)">${t}</text>
+          <text x="110" y="580" font-family="system-ui,-apple-system,Segoe UI,Roboto" font-size="28" font-weight="700" fill="rgba(255,255,255,.75)">Постер (demo) • tap to zoom</text>
+        </svg>
+      `);
+    }
+
+    function avatarSvg(seed, initials){
+      const a=(seed*53)%360, b=(seed*91+110)%360;
+      return svgToDataUri(`
+        <svg xmlns="http://www.w3.org/2000/svg" width="256" height="256" viewBox="0 0 256 256">
+          <defs>
+            <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0" stop-color="hsl(${a} 90% 60%)"/>
+              <stop offset="1" stop-color="hsl(${b} 85% 55%)"/>
+            </linearGradient>
+          </defs>
+          <rect width="256" height="256" rx="48" fill="url(#g)"/>
+          <circle cx="190" cy="62" r="44" fill="rgba(255,255,255,.18)"/>
+          <circle cx="70" cy="206" r="62" fill="rgba(0,0,0,.12)"/>
+          <text x="50%" y="56%" text-anchor="middle" font-family="system-ui,-apple-system,Segoe UI,Roboto" font-size="84" font-weight="950" fill="rgba(255,255,255,.92)">${initials}</text>
+        </svg>
+      `);
+    }
+
+    /* ====== Router ====== */
+    const pages = {
+      events: document.getElementById('page-events'),
+      detail: document.getElementById('page-detail'),
+      chat: document.getElementById('page-chat'),
+      leaderboard: document.getElementById('page-leaderboard'),
+      loyalty: document.getElementById('page-loyalty'),
+      profile: document.getElementById('page-profile'),
+    };
+    const pageTitle = document.getElementById('pageTitle');
+    const summaryBar = document.getElementById('summaryBar');
+
+    const state = {
+      current: 'events',
+      typeChip: 'all',
+      filters: { type:'all', city:'moscow' },
+      selectedEventIds: new Set(),
+      currentEventId: null,
+      selectedSlots: {},
+      lb: [],
+      // Calendar state:
+      calYear: 2025,
+      calMonth: 10, // 0=Jan, 10=Nov
+      rangeStart: null, // Date
+      rangeEnd: null,   // Date
+    };
+
+    function setPage(name){
+      Object.values(pages).forEach(p=>p.classList.remove('active'));
+      pages[name].classList.add('active');
+
+      pageTitle.textContent =
+        name==='events' ? 'Мои события' :
+        name==='detail' ? '' :
+        name==='chat' ? 'Чат' :
+        name==='leaderboard' ? 'Лидерборд' :
+        name==='loyalty' ? 'Лояльность' :
+        'Профиль';
+
+      summaryBar.style.display = (name==='events') ? 'block' : 'none';
+      state.current = name;
+      syncNav(name);
+    }
+
+    function syncNav(name){
+      document.querySelectorAll('.navBtn').forEach(b=>{
+        b.classList.toggle('active', b.dataset.go === name);
+      });
+    }
+
+    /* ====== Demo data ====== */
+    const events = [
+      { id:'e1', title:'Иллюзия обмана 3', date:'2025-11-26', place:'Ходынский бульв., 4, ТЦ «Авиапарк»', price:1000, type:'movie', posterSeed: 11 },
+      { id:'e2', title:'Авиатор',          date:'2025-11-26', place:'Ходынский бульв., 4, ТЦ «Авиапарк»', price:1000, type:'movie', posterSeed: 27 },
+      { id:'e3', title:'Август',           date:'2025-11-26', place:'Ходынский бульв., 4, ТЦ «Авиапарк»', price:1000, type:'movie', posterSeed: 39 },
+      { id:'e4', title:'Анна Каренина',    date:'2025-11-27', place:'Театр (центр)',                     price:1500, type:'theatre', posterSeed: 52 },
+      { id:'e5', title:'Дима Билан',       date:'2025-11-28', place:'Арена (demo)',                      price:2400, type:'concerts', posterSeed: 63 },
+    ];
+
+    function scheduleForEvent(eid){
+      const base = [
+        { key:'2025-11-26', label:'26 ноября', times:['13:00','15:30','17:30','20:00'] },
+        { key:'2025-11-27', label:'27 ноября', times:['13:00','15:30','17:30','20:00'] },
+        { key:'2025-11-28', label:'28 ноября', times:['13:00','15:30','17:30','20:00'] },
+      ];
+      if(eid==='e4') base[2].times = ['16:00','18:00','20:30'];
+      if(eid==='e5') base[0].times = ['19:00','20:30'];
+      return base;
+    }
+
+    /* ====== Date utils ====== */
+    const pad2 = (n)=> String(n).padStart(2,'0');
+    const toISO = (d)=> `${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())}`;
+    const parseISO = (s)=> {
+      const [y,m,d]=s.split('-').map(Number);
+      return new Date(y,m-1,d);
+    };
+    const sameDay = (a,b)=> a && b && a.getFullYear()===b.getFullYear() && a.getMonth()===b.getMonth() && a.getDate()===b.getDate();
+    const inRange = (d, a, b)=> a && b && d>=a && d<=b;
+
+    /* ====== Render events ====== */
+    const eventsList = document.getElementById('eventsList');
+
+    function passesDateFilter(evDateISO){
+      if(!state.rangeStart || !state.rangeEnd) return true; // no filter
+      const d = parseISO(evDateISO);
+      // normalize to midnight
+      d.setHours(0,0,0,0);
+      const a = new Date(state.rangeStart); a.setHours(0,0,0,0);
+      const b = new Date(state.rangeEnd);   b.setHours(0,0,0,0);
+      return d>=a && d<=b;
+    }
+
+    function renderEvents(){
+      const list = events
+        .filter(e => state.typeChip==='all' ? true : e.type===state.typeChip)
+        .filter(e => state.filters.type==='all' ? true : e.type===state.filters.type)
+        .filter(e => passesDateFilter(e.date));
+
+      eventsList.innerHTML = '';
+      list.forEach((e, idx)=>{
+        const checked = state.selectedEventIds.has(e.id);
+        const poster = posterSvg(e.posterSeed, e.title);
+
+        const prettyDate = (() => {
+          const d = parseISO(e.date);
+          const map = ['янв','фев','мар','апр','мая','июн','июл','авг','сен','окт','ноя','дек'];
+          return `${d.getDate()} ${map[d.getMonth()]}`;
+        })();
+
+        const el = document.createElement('div');
+        el.className = 'card event listAppear';
+        el.style.animationDelay = (0.04 + idx*0.04) + 's';
+        el.innerHTML = `
+          <div class="event">
+            <div class="checkCol">
+              <div class="check ${checked?'on':''}" data-check="${e.id}" title="Выбрать">
+                <svg viewBox="0 0 24 24" fill="none">
+                  <path d="M20 6L9 17l-5-5" stroke="white" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+              </div>
+            </div>
+
+            <div class="eventBody" data-open="${e.id}">
+              <div class="poster" data-zoom="${e.id}">
+                <img alt="${e.title}" src="${poster}"/>
+              </div>
+              <div class="info">
+                <div>
+                  <p class="name">${e.title}</p>
+                  <div class="sub">
+                    <div>${prettyDate}</div>
+                    <div>${e.place}</div>
+                  </div>
+                </div>
+                <div class="pricePill">${e.price.toLocaleString('ru-RU')} ₽</div>
+              </div>
+            </div>
+          </div>
+        `;
+        eventsList.appendChild(el);
+      });
+
+      recalcSummary();
+    }
+
+    /* ====== Summary ====== */
+    const sumSelected = document.getElementById('sumSelected');
+    const sumPrice = document.getElementById('sumPrice');
+    const sumBonus = document.getElementById('sumBonus');
+
+    function recalcSummary(){
+      const selected = [...state.selectedEventIds].map(id=>events.find(e=>e.id===id)).filter(Boolean);
+      const price = selected.reduce((s,e)=>s+e.price,0);
+      const bonus = Math.floor(price * 0.05);
+      sumSelected.textContent = `Выбрано ${selected.length} событий`;
+      sumPrice.textContent = `${price.toLocaleString('ru-RU')} ₽`;
+      sumBonus.textContent = `${bonus}`;
+      document.getElementById('btnBuySmall').textContent = selected.length ? 'Купить' : 'Выбрать';
+    }
+
+    /* ====== Detail ====== */
+    const detailPoster = document.getElementById('detailPoster');
+    const detailName = document.getElementById('detailName');
+    const slotBlocks = document.getElementById('slotBlocks');
+
+    function openDetail(id){
+      const e = events.find(x=>x.id===id);
+      if(!e) return;
+      state.currentEventId = id;
+
+      detailPoster.innerHTML = `
+        <div class="poster" style="height:260px;border-radius:22px" data-zoom="${e.id}">
+          <img alt="${e.title}" src="${posterSvg(e.posterSeed, e.title)}"/>
+        </div>
+      `;
+      detailName.textContent = e.title;
+
+      const sch = scheduleForEvent(id);
+      slotBlocks.innerHTML = sch.map(day=>{
+        const selectedTime = (state.selectedSlots[id] && state.selectedSlots[id][day.key]) || null;
+        return `
+          <div class="slotBlock">
+            <div class="rowHead">
+              <div class="date">${day.label}</div>
+              <div class="from">От ${e.price.toLocaleString('ru-RU')} ₽</div>
+            </div>
+            <div class="slots">
+              ${day.times.map(t=>`
+                <button class="slot ${selectedTime===t?'active':''}" data-slot="${id}" data-day="${day.key}" data-time="${t}">${t}</button>
+              `).join('')}
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      setPage('detail');
+    }
+
+    /* ====== Chat ====== */
+    const msgs = document.getElementById('msgs');
+    const chatTitle = document.getElementById('chatTitle');
+    const chatInput = document.getElementById('chatInput');
+
+    function seedMessage(side, text){
+      const b = document.createElement('div');
+      b.className = `bubble ${side}`;
+      b.textContent = text;
+      msgs.appendChild(b);
+      msgs.scrollTop = msgs.scrollHeight;
+    }
+
+    function openChatForEvent(id){
+      const e = events.find(x=>x.id===id);
+      state.currentEventId = id;
+      chatTitle.textContent = e ? `Чат: ${e.title}` : 'Чат события';
+
+      msgs.innerHTML = '';
+      seedMessage('left', 'Крутой фильм');
+      seedMessage('left', 'Актёры очень красивые');
+      seedMessage('right', 'Не знаю, но выглядит потрясающе');
+      seedMessage('left', 'Откуда этот персонаж, разве он был раньше?');
+      seedMessage('right', 'Да, это же Джек Уайлдер');
+      setPage('chat');
+    }
+
+    /* ====== Leaderboard ====== */
+    const lbList = document.getElementById('lbList');
+
+    function makeLB(){
+      const people = [
+        {name:'Сергей Орлов', pts: 9820, seed: 7},
+        {name:'Анна Каренина', pts: 9110, seed: 13},
+        {name:'Дима Билан', pts: 8730, seed: 21},
+        {name:'Арсений Бортников', pts: 7920, seed: 29},
+        {name:'Марина П.', pts: 7410, seed: 37},
+      ];
+      for(let i=people.length-1;i>0;i--){
+        const j=Math.floor(Math.random()*(i+1));
+        [people[i],people[j]]=[people[j],people[i]];
+      }
+      people.sort((a,b)=>b.pts-a.pts);
+      state.lb = people;
+    }
+
+    function renderLB(){
+      if(!state.lb.length) makeLB();
+      lbList.innerHTML = '';
+      state.lb.forEach((p, i)=>{
+        const initials = p.name.split(/\s+/).slice(0,2).map(x=>x[0].toUpperCase()).join('');
+        const ava = avatarSvg(p.seed+i*9, initials);
+
+        const row = document.createElement('div');
+        row.className = 'card listAppear';
+        row.style.padding = '12px';
+        row.style.animationDelay = (0.04 + i*0.05) + 's';
+        row.innerHTML = `
+          <div class="lbRow">
+            <div class="rankBadge">${i+1}</div>
+            <div class="ava" data-zoom-ava="${i}">
+              <img alt="${p.name}" src="${ava}"/>
+            </div>
+            <div style="min-width:0">
+              <div class="lbName">${p.name}</div>
+              <div class="lbSub">Очки за неделю (demo)</div>
+            </div>
+            <div style="font-weight:950">${p.pts.toLocaleString('ru-RU')}</div>
+          </div>
+        `;
+        lbList.appendChild(row);
+      });
+    }
+
+    /* ====== Filters + Calendar ====== */
+    const filtersOverlay = document.getElementById('filtersOverlay');
+    const btnFiltersBack = document.getElementById('btnFiltersBack');
+    const btnFiltersOk = document.getElementById('btnFiltersOk');
+    const btnCalReset = document.getElementById('btnCalReset');
+    const calRoot = document.getElementById('cal');
+
+    function openFilters(){ filtersOverlay.classList.add('show'); }
+    function closeFilters(){ filtersOverlay.classList.remove('show'); }
+
+    function bindOpts(groupId, key){
+      const root = document.getElementById(groupId);
+      root.addEventListener('click', (e)=>{
+        const opt = e.target.closest('.opt');
+        if(!opt) return;
+        root.querySelectorAll('.opt').forEach(x=>x.classList.remove('active'));
+        opt.classList.add('active');
+        state.filters[key] = opt.dataset.v;
+      });
+    }
+    bindOpts('fType','type');
+    bindOpts('fCity','city');
+
+    const monthNames = ['Янв','Фев','Мар','Апр','Май','Июн','Июл','Авг','Сен','Окт','Ноя','Дек'];
+    const dow = ['Su','Mo','Tu','We','Th','Fr','Sa'];
+
+    function clampRangeOrder(){
+      if(state.rangeStart && state.rangeEnd && state.rangeEnd < state.rangeStart){
+        const t = state.rangeStart; state.rangeStart = state.rangeEnd; state.rangeEnd = t;
+      }
+    }
+
+    function setRangeClick(dateObj){
+      const d = new Date(dateObj); d.setHours(0,0,0,0);
+      if(!state.rangeStart || (state.rangeStart && state.rangeEnd)){
+        state.rangeStart = d;
+        state.rangeEnd = null;
+        return;
+      }
+      // second click sets end
+      state.rangeEnd = d;
+      clampRangeOrder();
+    }
+
+    function renderCalendar(){
+      const y = state.calYear;
+      const m = state.calMonth;
+
+      const first = new Date(y,m,1);
+      const startDay = first.getDay(); // 0=Sun
+      const daysInMonth = new Date(y,m+1,0).getDate();
+
+      const years = [];
+      for(let yy=2024; yy<=2027; yy++) years.push(yy);
+
+      const start = state.rangeStart ? new Date(state.rangeStart) : null;
+      const end   = state.rangeEnd ? new Date(state.rangeEnd) : null;
+
+      const rangeText = (() => {
+        if(!start) return 'Диапазон: не выбран';
+        const fmt = (d)=> `${pad2(d.getDate())}.${pad2(d.getMonth()+1)}.${d.getFullYear()}`;
+        if(start && !end) return `Старт: ${fmt(start)} (выбери конец)`;
+        return `Диапазон: ${fmt(start)} — ${fmt(end)}`;
+      })();
+
+      // build calendar cells
+      const cells = [];
+      // empty before
+      for(let i=0;i<startDay;i++){
+        cells.push(`<div class="day muted"></div>`);
+      }
+      for(let dd=1; dd<=daysInMonth; dd++){
+        const d = new Date(y,m,dd); d.setHours(0,0,0,0);
+        const isSelStart = sameDay(d, start);
+        const isSelEnd = sameDay(d, end);
+        const isIn = inRange(d, start, end);
+        const cls = [
+          'day',
+          isSelStart || isSelEnd ? 'sel' : '',
+          (!isSelStart && !isSelEnd && isIn) ? 'inRange':''
+        ].filter(Boolean).join(' ');
+
+        cells.push(`<div class="${cls}" data-calday="${toISO(d)}">${dd}</div>`);
+      }
+
+      calRoot.innerHTML = `
+        <div class="calTop">
+          <button class="navAr" id="calPrev">‹</button>
+          <div class="selects">
+            <select id="calMonthSel">
+              ${monthNames.map((n,idx)=>`<option value="${idx}" ${idx===m?'selected':''}>${n}</option>`).join('')}
+            </select>
+            <select id="calYearSel">
+              ${years.map(yy=>`<option value="${yy}" ${yy===y?'selected':''}>${yy}</option>`).join('')}
+            </select>
+          </div>
+          <button class="navAr" id="calNext">›</button>
+        </div>
+
+        <div class="dow">
+          ${['Su','Mo','Tu','We','Th','Fr','Sa'].map(x=>`<div>${x}</div>`).join('')}
+        </div>
+
+        <div class="grid" id="calGrid">
+          ${cells.join('')}
+        </div>
+
+        <div class="rangeLine">
+          <div>${rangeText}</div>
+          <div style="font-weight:950;color:#111">${state.filters.city==='moscow'?'Москва':(state.filters.city==='spb'?'СПб':'Казань')}</div>
+        </div>
+      `;
+
+      // bind cal controls
+      document.getElementById('calPrev').onclick = ()=>{
+        const nm = state.calMonth - 1;
+        if(nm<0){ state.calMonth=11; state.calYear--; } else state.calMonth=nm;
+        renderCalendar();
+      };
+      document.getElementById('calNext').onclick = ()=>{
+        const nm = state.calMonth + 1;
+        if(nm>11){ state.calMonth=0; state.calYear++; } else state.calMonth=nm;
+        renderCalendar();
+      };
+      document.getElementById('calMonthSel').onchange = (e)=>{
+        state.calMonth = Number(e.target.value);
+        renderCalendar();
+      };
+      document.getElementById('calYearSel').onchange = (e)=>{
+        state.calYear = Number(e.target.value);
+        renderCalendar();
+      };
+
+      // day click
+      const grid = document.getElementById('calGrid');
+      grid.onclick = (e)=>{
+        const cell = e.target.closest('[data-calday]');
+        if(!cell) return;
+        setRangeClick(parseISO(cell.dataset.calday));
+        renderCalendar();
+      };
+    }
+
+    btnCalReset.addEventListener('click', ()=>{
+      state.rangeStart = null;
+      state.rangeEnd = null;
+      renderCalendar();
+      showToast('Диапазон сброшен');
+    });
+
+    /* ====== Benefits ====== */
+    const benefitsOverlay = document.getElementById('benefitsOverlay');
+    const benTitle = document.getElementById('benTitle');
+    const benBody = document.getElementById('benBody');
+    const benefits = {
+      lvl1: ['Накопительная бонусная система'],
+      lvl2: ['Полный возврат средств', 'Бесплатная бронь мероприятий', 'Повышение категории билетов.'],
+      lvl3: ['Гарантированные билеты', 'Закрытые ивенты', 'Приоритетный доступ'],
+    };
+    function openBenefits(levelKey){
+      const title = levelKey==='lvl1'?'1 уровень':levelKey==='lvl2'?'2 уровень':'3 уровень';
+      benTitle.textContent = title;
+      benBody.innerHTML = (benefits[levelKey] || []).map(txt=>`
+        <div class="card" style="padding:14px;display:flex;align-items:center;justify-content:space-between;gap:12px">
+          <div style="font-weight:850">${txt}</div>
+          <button class="iconbtn" data-closeben style="width:40px;height:40px" title="Закрыть">✕</button>
+        </div>
+      `).join('');
+      benefitsOverlay.classList.add('show');
+    }
+    function closeBenefits(){ benefitsOverlay.classList.remove('show'); }
+
+    /* ====== Viewer ====== */
+    const viewer = document.getElementById('viewer');
+    const viewerBox = document.getElementById('viewerBox');
+    function openViewer(src){
+      viewerBox.innerHTML = `<img alt="preview" src="${src}"/>`;
+      viewer.classList.add('show');
+    }
+    function closeViewer(){
+      viewer.classList.remove('show');
+      viewerBox.innerHTML = '';
+    }
+
+    /* ====== Toast ====== */
+    const toast = document.getElementById('toast');
+    function showToast(text){
+      toast.textContent = text;
+      toast.classList.add('show');
+      clearTimeout(showToast._t);
+      showToast._t = setTimeout(()=>toast.classList.remove('show'), 1400);
+    }
+
+    /* ====== Delegation clicks ====== */
+    document.addEventListener('click', (e)=>{
+      const c = e.target.closest('[data-check]');
+      if(c){
+        const id = c.dataset.check;
+        if(state.selectedEventIds.has(id)) state.selectedEventIds.delete(id);
+        else state.selectedEventIds.add(id);
+        renderEvents();
+        showToast(state.selectedEventIds.has(id) ? 'Добавлено' : 'Убрано');
+        return;
+      }
+
+      const open = e.target.closest('[data-open]');
+      if(open){
+        openDetail(open.dataset.open);
+        return;
+      }
+
+      const z = e.target.closest('[data-zoom]');
+      if(z){
+        const id = z.dataset.zoom;
+        const ev = events.find(x=>x.id===id);
+        if(ev) openViewer(posterSvg(ev.posterSeed, ev.title));
+        return;
+      }
+
+      const za = e.target.closest('[data-zoom-ava]');
+      if(za){
+        const idx = Number(za.dataset.zoomAva);
+        const p = state.lb[idx];
+        if(p){
+          const initials = p.name.split(/\s+/).slice(0,2).map(x=>x[0].toUpperCase()).join('');
+          openViewer(avatarSvg(p.seed+idx*9, initials));
+        }
+        return;
+      }
+
+      const slot = e.target.closest('[data-slot]');
+      if(slot){
+        const id = slot.dataset.slot;
+        const day = slot.dataset.day;
+        const time = slot.dataset.time;
+        state.selectedSlots[id] = state.selectedSlots[id] || {};
+        state.selectedSlots[id][day] = time;
+        openDetail(id);
+        showToast(`Выбрано: ${time}`);
+        return;
+      }
+
+      const closeBen = e.target.closest('[data-closeben]');
+      if(closeBen){
+        closeBenefits();
+        showToast('Закрыто');
+        return;
+      }
+    });
+
+    /* ====== Top buttons ====== */
+    document.getElementById('btnBack').addEventListener('click', ()=>{
+      if(state.current==='detail' || state.current==='chat'){
+        setPage('events');
+        showToast('Назад');
+      } else {
+        showToast('Назад (demo)');
+      }
+    });
+    document.getElementById('btnSearch').addEventListener('click', ()=> showToast('Поиск (demo)'));
+    document.getElementById('btnPin').addEventListener('click', ()=> showToast('Гео (demo)'));
+    document.getElementById('btnProfile').addEventListener('click', ()=>{
+      setPage('profile');
+      showToast('Профиль');
+    });
+
+    /* ====== Chips ====== */
+    document.getElementById('typeChips').addEventListener('click', (e)=>{
+      const chip = e.target.closest('.chip');
+      if(!chip) return;
+      if(chip.id==='openFilters'){ openFilters(); return; }
+
+      const type = chip.dataset.type;
+      if(!type) return;
+      document.querySelectorAll('#typeChips .chip').forEach(x=>x.classList.remove('active'));
+      chip.classList.add('active');
+      state.typeChip = type;
+      renderEvents();
+      showToast('Фильтр: ' + chip.textContent.trim());
+    });
+
+    document.getElementById('openFilters').addEventListener('click', ()=>{
+      openFilters();
+      renderCalendar();
+    });
+    btnFiltersBack.addEventListener('click', closeFilters);
+    btnFiltersOk.addEventListener('click', ()=>{
+      closeFilters();
+      // if user picked only start, treat as single-day range
+      if(state.rangeStart && !state.rangeEnd) state.rangeEnd = new Date(state.rangeStart);
+      renderEvents();
+      showToast('Фильтры применены');
+    });
+
+    /* ====== Buy buttons ====== */
+    document.getElementById('btnBuySmall').addEventListener('click', ()=>{
+      if(!state.selectedEventIds.size){
+        showToast('Сначала выбери события');
+        return;
+      }
+      showToast('Покупка (demo)');
+    });
+
+    document.getElementById('btnBuyBig').addEventListener('click', ()=>{
+      const id = state.currentEventId;
+      const e = events.find(x=>x.id===id);
+      const picked = state.selectedSlots[id] && Object.values(state.selectedSlots[id])[0];
+      showToast(picked ? `Куплено: ${e.title} • ${picked} (demo)` : 'Выбери время');
+    });
+
+    document.getElementById('btnJoinChat').addEventListener('click', ()=>{
+      if(!state.currentEventId) return;
+      openChatForEvent(state.currentEventId);
+      showToast('Открыт чат');
+    });
+
+    /* ====== Chat ====== */
+    document.getElementById('btnSend').addEventListener('click', ()=>{
+      const t = chatInput.value.trim();
+      if(!t) return;
+      seedMessage('right', t);
+      chatInput.value = '';
+      setTimeout(()=>seedMessage('left', 'Ого, согласен 😄'), 250);
+    });
+    document.getElementById('btnChatPic').addEventListener('click', ()=>{
+      const e = events.find(x=>x.id===state.currentEventId) || events[0];
+      openViewer(posterSvg(e.posterSeed, e.title));
+    });
+
+    /* ====== Loyalty ====== */
+    document.querySelectorAll('[data-benefits]').forEach(el=>{
+      el.addEventListener('click', ()=> openBenefits(el.dataset.benefits));
+    });
+    document.getElementById('btnBenClose').addEventListener('click', closeBenefits);
+    benefitsOverlay.addEventListener('click', (e)=>{ if(e.target===benefitsOverlay) closeBenefits(); });
+
+    document.getElementById('btnSupport').addEventListener('click', ()=>showToast('Поддержка (demo)'));
+    document.getElementById('btnFAQ').addEventListener('click', ()=>showToast('FAQ (demo)'));
+    document.getElementById('btnRules').addEventListener('click', ()=>showToast('Правила (demo)'));
+    document.getElementById('btnHistory').addEventListener('click', ()=>showToast('История (demo)'));
+    document.getElementById('btnOpenLoyalty').addEventListener('click', ()=>{
+      setPage('loyalty'); showToast('Лояльность');
+    });
+
+    /* ====== Viewer close ====== */
+    viewer.addEventListener('click', (e)=>{ if(e.target===viewer) closeViewer(); });
+    document.addEventListener('keydown', (e)=>{ if(e.key==='Escape'){ closeViewer(); closeFilters(); closeBenefits(); } });
+
+    /* ====== Nav ====== */
+    function goTab(tab){
+      if(state.current==='detail' || state.current==='chat') return; // no tab swipe there
+      if(tab==='events'){ setPage('events'); }
+      if(tab==='leaderboard'){ setPage('leaderboard'); renderLB(); }
+      if(tab==='loyalty'){ setPage('loyalty'); }
+      if(tab==='profile'){ setPage('profile'); }
+    }
+
+    document.getElementById('nav').addEventListener('click', (e)=>{
+      const b = e.target.closest('.navBtn');
+      if(!b) return;
+      goTab(b.dataset.go);
+    });
+
+    document.getElementById('btnLBShuffle').addEventListener('click', ()=>{
+      makeLB(); renderLB(); showToast('Обновлено');
+    });
+
+    /* ====== Swipes (tabs) ====== */
+    const orderedTabs = ['events','leaderboard','loyalty','profile'];
+    function tabIndex(){ return orderedTabs.indexOf(state.current); }
+
+    const pagesEl = document.getElementById('pages');
+    let sx=0, sy=0, dx=0, dy=0, activeTouch=false;
+
+    pagesEl.addEventListener('touchstart', (e)=>{
+      if(state.current==='detail' || state.current==='chat') return;
+      if(e.touches.length!==1) return;
+      activeTouch=true;
+      sx=e.touches[0].clientX;
+      sy=e.touches[0].clientY;
+      dx=dy=0;
+    }, {passive:true});
+
+    pagesEl.addEventListener('touchmove', (e)=>{
+      if(!activeTouch) return;
+      dx = e.touches[0].clientX - sx;
+      dy = e.touches[0].clientY - sy;
+    }, {passive:true});
+
+    pagesEl.addEventListener('touchend', ()=>{
+      if(!activeTouch) return;
+      activeTouch=false;
+
+      const absX = Math.abs(dx), absY = Math.abs(dy);
+      // swipe threshold
+      if(absX > 70 && absY < 55){
+        const i = tabIndex();
+        if(dx < 0 && i < orderedTabs.length-1){
+          goTab(orderedTabs[i+1]); showToast('→');
+        }
+        if(dx > 0 && i > 0){
+          goTab(orderedTabs[i-1]); showToast('←');
+        }
+      }
+    });
+
+    /* ====== Init ====== */
+    document.getElementById('loyAva').innerHTML = `<img alt="ava" src="${avatarSvg(5,'СБ')}"/>`;
+
+    // default filter type
+    state.filters.type = 'all';
+
+    renderEvents();
+    makeLB(); renderLB();
+    renderCalendar();
+  </script>
+</body>
+</html>
